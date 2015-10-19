@@ -1,6 +1,7 @@
 .classpath
 .gradle
 .project
+*.iml
 
 *.class
 *.gen
@@ -9,3 +10,4 @@
 bin/
 build/
 .settings/
+.idea/
