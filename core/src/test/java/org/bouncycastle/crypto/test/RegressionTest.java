@@ -50,6 +50,7 @@ public class RegressionTest
         new GOST28147Test(),
         new IDEATest(),
         new RSATest(),
+        new SRATest(),
         new RSABlindedTest(),
         new RSADigestSignerTest(),
         new PSSBlindTest(),
