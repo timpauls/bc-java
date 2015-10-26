@@ -1,33 +1,29 @@
 package org.bouncycastle.crypto.params;
 
-import java.math.BigInteger;
+import org.bouncycastle.crypto.KeyGenerationParameters;
 
-public class SRAKeyGenerationParameters {
+import java.math.BigInteger;
+import java.security.SecureRandom;
+
+public class SRAKeyGenerationParameters extends KeyGenerationParameters {
     private BigInteger p;
     private BigInteger q;
-    private BigInteger publicExponent;
+    private int certainty;
 
-    public SRAKeyGenerationParameters(BigInteger p, BigInteger q, BigInteger publicExponent)
+    public SRAKeyGenerationParameters(BigInteger p, BigInteger q, SecureRandom random, int certainty)
     {
+        super(random, 0); // strength is not needed for SRA
         this.p = p;
         this.q = q;
-        // TODO: random generation of public exponent instead of passing it
-        this.publicExponent = publicExponent;
+        this.certainty = certainty;
 
-        // TODO: security checks for p and q
-
-        //
-        // public exponent cannot be even
-        //
-        if (!publicExponent.testBit(0)) 
-        {
-                throw new IllegalArgumentException("public exponent cannot be even");
+        if (!p.isProbablePrime(certainty)) {
+            throw new IllegalArgumentException("p is probably NOT prime!");
         }
-    }
 
-    public BigInteger getPublicExponent()
-    {
-        return publicExponent;
+        if (!q.isProbablePrime(certainty)) {
+            throw new IllegalArgumentException("q is probably NOT prime!");
+        }
     }
 
     public BigInteger getP() {
@@ -36,5 +32,9 @@ public class SRAKeyGenerationParameters {
 
     public BigInteger getQ() {
         return q;
+    }
+
+    public int getCertainty() {
+        return certainty;
     }
 }

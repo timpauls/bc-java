@@ -1,6 +1,8 @@
 package org.bouncycastle.crypto.generators;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.AsymmetricCipherKeyPairGenerator;
+import org.bouncycastle.crypto.KeyGenerationParameters;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
 import org.bouncycastle.crypto.params.RSAPrivateCrtKeyParameters;
 import org.bouncycastle.crypto.params.SRAKeyGenerationParameters;
@@ -10,22 +12,23 @@ import java.math.BigInteger;
 /**
  * Created by tim on 25.10.2015.
  */
-public class SRAKeyPairGenerator {
+public class SRAKeyPairGenerator implements AsymmetricCipherKeyPairGenerator {
     private static final BigInteger ONE = BigInteger.valueOf(1);
 
     private SRAKeyGenerationParameters param;
 
-    public void init(SRAKeyGenerationParameters param) {
-        this.param = param;
+    @Override
+    public void init(KeyGenerationParameters param) {
+        this.param = (SRAKeyGenerationParameters) param;
     }
 
+    @Override
     public AsymmetricCipherKeyPair generateKeyPair() {
-        AsymmetricCipherKeyPair result = null;
+        AsymmetricCipherKeyPair result;
         BigInteger p, q, n, d, e, pSub1, qSub1, gcd, lcm;
 
         p = param.getP();
         q = param.getQ();
-        e = param.getPublicExponent();
         n = p.multiply(q);
 
         if (p.compareTo(q) < 0)
@@ -39,6 +42,8 @@ public class SRAKeyPairGenerator {
         qSub1 = q.subtract(ONE);
         gcd = pSub1.gcd(qSub1);
         lcm = pSub1.divide(gcd).multiply(qSub1);
+
+        e = chooseRandomPublicExponent(lcm);
 
         //
         // calculate the private exponent
@@ -59,5 +64,29 @@ public class SRAKeyPairGenerator {
                 new RSAPrivateCrtKeyParameters(n, e, d, p, q, dP, dQ, qInv));
 
         return result;
+    }
+
+    /**
+     * Choose a random public exponent to use with SRA.
+     *
+     * @param phiN (p-1)*(q-1)
+     * @return an exponent e, with 1 < e < phiN
+     */
+    private BigInteger chooseRandomPublicExponent(BigInteger phiN)
+    {
+        for (;;)
+        {
+            BigInteger e = new BigInteger(phiN.bitLength(), param.getCertainty(), param.getRandom());
+
+            if (e.compareTo(ONE) <= 0) {
+                continue;
+            }
+
+            if (e.compareTo(phiN) >= 0) {
+                continue;
+            }
+
+            return e;
+        }
     }
 }
