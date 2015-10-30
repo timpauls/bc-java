@@ -43,7 +43,7 @@ public class SRAKeyPairGenerator implements AsymmetricCipherKeyPairGenerator {
         gcd = pSub1.gcd(qSub1);
         lcm = pSub1.divide(gcd).multiply(qSub1);
 
-        e = chooseRandomPublicExponent(lcm);
+        e = chooseRandomPublicExponent(pSub1.multiply(qSub1));
 
         //
         // calculate the private exponent
