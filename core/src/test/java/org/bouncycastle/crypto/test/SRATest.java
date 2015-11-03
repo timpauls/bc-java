@@ -8,16 +8,14 @@ import org.bouncycastle.crypto.params.SRAKeyGenerationParameters;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.test.SimpleTest;
-import org.junit.Test;
 
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 public class SRATest extends SimpleTest {
-    static BigInteger  p = new BigInteger("f75e80839b9b9379f1cf1128f321639757dba514642c206bbbd99f9a4846208b3e93fbbe5e0527cc59b1d4b929d9555853004c7c8b30ee6a213c3d1bb7415d03", 16);
-    static BigInteger  q = new BigInteger("b892d9ebdbfc37e397256dd8a5d3123534d1f03726284743ddc6be3a709edb696fc40c7d902ed804c6eee730eee3d5b20bf6bd8d87a296813c87d3b3cc9d7947", 16);
-
+    public static final int KEY_SIZE_IN_BIT = 2048;
+    public static final int CERTAINTY = 80;
     static String input = "4e6f77206973207468652074696d6520666f7220616c6c20676f6f64206d656e";
 
     //
@@ -25,37 +23,45 @@ public class SRATest extends SimpleTest {
     //
     static String edgeInput = "ff6f77206973207468652074696d6520666f7220616c6c20676f6f64206d656e";
     private SecureRandom secureRandom;
+    private SRAKeyParametersGenerator keyParamGenerator;
 
     public String getName()
     {
         return "SRA";
     }
 
-    public void performTest() {
+    private void setup() {
         try {
             secureRandom = SecureRandom.getInstance("SHA1PRNG");
-            testKeyParameterGeneration();
-            testEncryptionDecryption();
-            testCommutativity();
+            keyParamGenerator = new SRAKeyParametersGenerator();
+            keyParamGenerator.init(KEY_SIZE_IN_BIT, CERTAINTY, secureRandom);
         } catch (NoSuchAlgorithmException e) {
             fail("failed - no such SecureRandom algorithm");
         }
     }
 
+    public void performTest() {
+        setup();
+
+        testKeyParameterGeneration();
+        testEncryptionDecryption();
+        testCommutativity();
+    }
+
     private void testKeyParameterGeneration() {
         try {
             SRAKeyParametersGenerator generator = new SRAKeyParametersGenerator();
-            generator.init(2048, 80, secureRandom);
+            generator.init(KEY_SIZE_IN_BIT, CERTAINTY, secureRandom);
             generator.generateParameters();
         } catch (IllegalArgumentException e) {
             fail("key parameter generation failed", e);
         }
     }
 
-    private void testEncryptionDecryption() throws NoSuchAlgorithmException {
+    private void testEncryptionDecryption() {
         SRAKeyPairGenerator sraKeyPairGenerator = new SRAKeyPairGenerator();
-        // TODO: replace constructor with generator
-        sraKeyPairGenerator.init(new SRAKeyGenerationParameters(p, q, SecureRandom.getInstance("SHA1PRNG"), 5, 5));
+        SRAKeyGenerationParameters sraKeyGenerationParameters = keyParamGenerator.generateParameters();
+        sraKeyPairGenerator.init(sraKeyGenerationParameters);
         AsymmetricCipherKeyPair asymmetricCipherKeyPair = sraKeyPairGenerator.generateKeyPair();
 
         byte[] data = Hex.decode(edgeInput);
@@ -76,17 +82,17 @@ public class SRATest extends SimpleTest {
      * Test commutativity:
      * Da(Eb(Ea(M))) = Eb(M)
      */
-    private void testCommutativity() throws NoSuchAlgorithmException {
+    private void testCommutativity() {
         // Alice
         SRAKeyPairGenerator sraKeyPairGeneratorAlice = new SRAKeyPairGenerator();
-        // TODO: replace constructor with generator
-        sraKeyPairGeneratorAlice.init(new SRAKeyGenerationParameters(p, q, SecureRandom.getInstance("SHA1PRNG"), 5, 5));
+        SRAKeyGenerationParameters params = keyParamGenerator.generateParameters();
+        sraKeyPairGeneratorAlice.init(params);
         AsymmetricCipherKeyPair asymmetricCipherKeyPairAlice = sraKeyPairGeneratorAlice.generateKeyPair();
 
         // Bob
         SRAKeyPairGenerator sraKeyPairGeneratorBob = new SRAKeyPairGenerator();
-        // TODO: replace constructor with generator
-        sraKeyPairGeneratorBob.init(new SRAKeyGenerationParameters(p, q, SecureRandom.getInstance("SHA1PRNG"), 5, 5));
+
+        sraKeyPairGeneratorBob.init(new SRAKeyGenerationParameters(params.getP(), params.getQ(), secureRandom, KEY_SIZE_IN_BIT, CERTAINTY));
         AsymmetricCipherKeyPair asymmetricCipherKeyPairBob = sraKeyPairGeneratorBob.generateKeyPair();
 
         byte[] data = Hex.decode(edgeInput);

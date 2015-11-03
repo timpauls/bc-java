@@ -37,7 +37,7 @@ public class SRAKeyGenerationParameters extends KeyGenerationParameters {
         }
 
         BigInteger n = p.multiply(q);
-        if (n.bitLength() <= strength) {
+        if (n.bitLength() != strength) {
             throw new IllegalArgumentException("p and q are not strong enough!");
         }
     }

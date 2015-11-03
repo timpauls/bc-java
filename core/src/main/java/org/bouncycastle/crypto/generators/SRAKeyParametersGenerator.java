@@ -52,7 +52,7 @@ public class SRAKeyParametersGenerator
             while (true) {
                 q = new BigInteger(this.size / 2, this.certainty, this.random);
 
-                if (q.isProbablePrime(this.certainty)) {
+                if (q.isProbablePrime(this.certainty) && !q.equals(p)) {
                     break;
                 }
             }
