@@ -23,6 +23,7 @@ public class RegressionTest
         new HMacTest(),
         new SealedTest(),
         new RSATest(),
+        new SRATest(),
         new DHTest(),
         new DHIESTest(),
         new DSATest(),
