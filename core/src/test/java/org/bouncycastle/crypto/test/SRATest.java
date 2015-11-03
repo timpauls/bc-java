@@ -43,9 +43,29 @@ public class SRATest extends SimpleTest {
     public void performTest() {
         setup();
 
+        testSRAEngineException();
         testKeyParameterGeneration();
         testEncryptionDecryption();
         testCommutativity();
+    }
+
+    private void testSRAEngineException() {
+        boolean caughtException = false;
+
+        SRAEngine sraEngine = new SRAEngine();
+        try {
+            sraEngine.processBlock(input.getBytes(), 0, input.getBytes().length);
+        } catch (Exception e) {
+            caughtException = true;
+
+            if (e.getMessage().contains("RSA")) {
+                fail("failed - exception message contains wrong algorithm", e);
+            }
+        }
+
+        if (!caughtException) {
+            fail("failed - unitialized SRAEngine did not throw exception");
+        }
     }
 
     private void testKeyParameterGeneration() {
