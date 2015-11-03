@@ -46,6 +46,7 @@ public class SRAKeyParametersGenerator
                 if (p.isProbablePrime(this.certainty)) {
                     break;
                 }
+//                System.out.println("Generation new p...");
             }
 
             BigInteger q;
@@ -55,6 +56,7 @@ public class SRAKeyParametersGenerator
                 if (q.isProbablePrime(this.certainty) && !q.equals(p)) {
                     break;
                 }
+//                System.out.println("Generation new q...");
             }
 
             BigInteger n = p.multiply(q);
@@ -62,6 +64,7 @@ public class SRAKeyParametersGenerator
                 return new SRAKeyGenerationParameters(p, q, this.random, this.size, this.certainty);
             }
 
+//            System.out.println("n bits: " + n.bitLength() + "; size: " + this.size);
         }
     }
 }
