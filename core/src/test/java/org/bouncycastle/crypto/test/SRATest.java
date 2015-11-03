@@ -1,6 +1,7 @@
 package org.bouncycastle.crypto.test;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.engines.SRAEngine;
 import org.bouncycastle.crypto.generators.SRAKeyPairGenerator;
 import org.bouncycastle.crypto.generators.SRAKeyParametersGenerator;
@@ -9,7 +10,6 @@ import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.test.SimpleTest;
 
-import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
@@ -43,28 +43,43 @@ public class SRATest extends SimpleTest {
     public void performTest() {
         setup();
 
-        testSRAEngineException();
+        testSRAEngineNotInitializedException();
+        testSRAEngineDataLengthException();
         testKeyParameterGeneration();
         testEncryptionDecryption();
         testCommutativity();
     }
 
-    private void testSRAEngineException() {
-        boolean caughtException = false;
-
+    private void testSRAEngineNotInitializedException() {
         SRAEngine sraEngine = new SRAEngine();
         try {
             sraEngine.processBlock(input.getBytes(), 0, input.getBytes().length);
+            fail("failed - unitialized SRAEngine did not throw exception");
         } catch (Exception e) {
-            caughtException = true;
-
             if (e.getMessage().contains("RSA")) {
                 fail("failed - exception message contains wrong algorithm", e);
             }
         }
+    }
 
-        if (!caughtException) {
-            fail("failed - unitialized SRAEngine did not throw exception");
+    private void testSRAEngineDataLengthException() {
+        SRAKeyParametersGenerator sraKeyParametersGenerator = new SRAKeyParametersGenerator();
+        sraKeyParametersGenerator.init(12, 5, secureRandom);
+        SRAKeyGenerationParameters sraKeyGenerationParameters = sraKeyParametersGenerator.generateParameters();
+        SRAKeyPairGenerator sraKeyPairGenerator = new SRAKeyPairGenerator();
+        sraKeyPairGenerator.init(sraKeyGenerationParameters);
+        AsymmetricCipherKeyPair asymmetricCipherKeyPair = sraKeyPairGenerator.generateKeyPair();
+
+        SRAEngine sraEngine = new SRAEngine();
+        sraEngine.init(true, asymmetricCipherKeyPair.getPublic());
+
+        try {
+            sraEngine.processBlock(input.getBytes(), 0, input.getBytes().length);
+            fail("failed - failed to recognize too large input for modulus");
+        } catch (DataLengthException e) {
+            if (e.getMessage().contains("RSA")) {
+                fail("failed - exception message contains wrong algorithm", e);
+            }
         }
     }
 
