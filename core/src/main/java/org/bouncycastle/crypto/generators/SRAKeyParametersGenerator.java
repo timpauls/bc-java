@@ -1,6 +1,5 @@
 package org.bouncycastle.crypto.generators;
 
-import org.bouncycastle.crypto.params.DHParameters;
 import org.bouncycastle.crypto.params.SRAKeyGenerationParameters;
 
 import java.math.BigInteger;
