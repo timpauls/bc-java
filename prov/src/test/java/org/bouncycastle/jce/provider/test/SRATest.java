@@ -1,8 +1,5 @@
 package org.bouncycastle.jce.provider.test;
 
-import org.bouncycastle.crypto.engines.SRAEngine;
-import org.bouncycastle.crypto.util.PrivateKeyFactory;
-import org.bouncycastle.crypto.util.PublicKeyFactory;
 import org.bouncycastle.jcajce.provider.asymmetric.sra.SRAKeyGenParameterSpec;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
@@ -14,6 +11,8 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.math.BigInteger;
 import java.security.*;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 
 /**
  * Test for the SRA JCE provider
@@ -36,6 +35,7 @@ public class SRATest extends SimpleTest {
     public void performTest() throws Exception {
         standardKeyPairGenerationAndEnDecryption();
         keyPairGenerationAndEnDecryptionWithGivenPQ();
+        checkPQ();
     }
 
     private void standardKeyPairGenerationAndEnDecryption() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -96,6 +96,31 @@ public class SRATest extends SimpleTest {
             fail("failed - encryption and decryption did not restore plain text.");
         }
     }
+
+    private void checkPQ() throws NoSuchProviderException, NoSuchAlgorithmException {
+        SRAKeyGenParameterSpec sraKeyGenParameterSpec = new SRAKeyGenParameterSpec(KEY_SIZE, DEFAULT_P, DEFAULT_Q);
+
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
+        try {
+            generator.initialize(sraKeyGenParameterSpec);
+        } catch (InvalidAlgorithmParameterException e) {
+            fail("failed - invalid algorithm parameters", e);
+        }
+        KeyPair keyPair = generator.generateKeyPair();
+        BigInteger privateKeyModulus = ((RSAPrivateKey) keyPair.getPrivate()).getModulus();
+        BigInteger publicKeyModulus = ((RSAPublicKey) keyPair.getPublic()).getModulus();
+        BigInteger myModulus = DEFAULT_P.multiply(DEFAULT_Q);
+
+        if (!privateKeyModulus.equals(publicKeyModulus)) {
+            fail("failed - public and private key moduli are not the same!");
+        }
+
+        if (!privateKeyModulus.equals(myModulus)) {
+            fail("failed - generated key pair modulus does not equal expected modulus!");
+        }
+    }
+
+
 
     public static void main(String[] args) {
         Security.addProvider(new BouncyCastleProvider());
