@@ -28,8 +28,8 @@ public class BCRSAPublicKey
     private BigInteger publicExponent;
     private transient AlgorithmIdentifier algorithmIdentifier;
 
-    BCRSAPublicKey(
-        RSAKeyParameters key)
+    public BCRSAPublicKey(
+            RSAKeyParameters key)
     {
         this.algorithmIdentifier = DEFAULT_ALGORITHM_IDENTIFIER;
         this.modulus = key.getModulus();

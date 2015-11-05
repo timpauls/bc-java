@@ -35,8 +35,8 @@ public class BCRSAPrivateCrtKey
      *
      * @param key the parameters object representing the private key.
      */
-    BCRSAPrivateCrtKey(
-        RSAPrivateCrtKeyParameters key)
+    public BCRSAPrivateCrtKey(
+            RSAPrivateCrtKeyParameters key)
     {
         super(key);
 

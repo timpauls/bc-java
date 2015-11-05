@@ -15,7 +15,7 @@ import java.security.*;
  * TODO: not really on par with {@link org.bouncycastle.jce.provider.test.RSATest} ;-)
  */
 public class SRATest extends SimpleTest {
-    private static final int KEY_SIZE = 128;
+    private static final int KEY_SIZE = 2048;
     private static final String PLAIN_TEXT = "A quick movement of the enemy will jeopardize six gunboats";
 
     @Override
@@ -32,6 +32,7 @@ public class SRATest extends SimpleTest {
         PublicKey publicKey = keyPair.getPublic();
         PrivateKey privateKey = keyPair.getPrivate();
 
+        // TODO: load cipher through JCE
         SRAEngine sraEngine = new SRAEngine();
 
         System.out.println("Plain: " + PLAIN_TEXT);

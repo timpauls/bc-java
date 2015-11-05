@@ -9,9 +9,6 @@ import org.bouncycastle.crypto.params.SRAKeyGenerationParameters;
 
 import java.math.BigInteger;
 
-/**
- * Created by tim on 25.10.2015.
- */
 public class SRAKeyPairGenerator implements AsymmetricCipherKeyPairGenerator {
     private static final BigInteger ONE = BigInteger.valueOf(1);
 
