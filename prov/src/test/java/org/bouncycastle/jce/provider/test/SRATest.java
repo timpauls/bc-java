@@ -7,6 +7,10 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.test.SimpleTest;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.security.*;
 
 /**
@@ -25,28 +29,34 @@ public class SRATest extends SimpleTest {
 
     @Override
     public void performTest() throws Exception {
+        standardKeyPairGenerationAndEnDecryption();
+        //TODO: test with given p and q.
+    }
+
+    private void standardKeyPairGenerationAndEnDecryption() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         KeyPairGenerator generator = KeyPairGenerator.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
         generator.initialize(KEY_SIZE);
 
         KeyPair keyPair = generator.generateKeyPair();
-        PublicKey publicKey = keyPair.getPublic();
-        PrivateKey privateKey = keyPair.getPrivate();
 
-        // TODO: load cipher through JCE
-        SRAEngine sraEngine = new SRAEngine();
+        Cipher engine = Cipher.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
 
         System.out.println("Plain: " + PLAIN_TEXT);
 
-        sraEngine.init(true, PublicKeyFactory.createKey(publicKey.getEncoded()));
-        byte[] cipher = sraEngine.processBlock(PLAIN_TEXT.getBytes(), 0, PLAIN_TEXT.getBytes().length);
+        engine.init(Cipher.ENCRYPT_MODE, keyPair.getPublic());
+        byte[] cipher = engine.doFinal(PLAIN_TEXT.getBytes());
+
         System.out.println("Cipher: " + Hex.toHexString(cipher));
 
-        sraEngine.init(false, PrivateKeyFactory.createKey(privateKey.getEncoded()));
-        byte[] decrypted = sraEngine.processBlock(cipher, 0, cipher.length);
-        System.out.println("Decrypted: " + new String(decrypted));
+        engine.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+        byte[] decipher = engine.doFinal(cipher);
 
-        if (!PLAIN_TEXT.equals(new String(decrypted))) {
-            fail("failed - encryption and decryption did not restore original plain text");
+        String decipherString = new String(decipher);
+
+        System.out.println("Decipher: " + decipherString);
+
+        if (!PLAIN_TEXT.equals(decipherString)) {
+            fail("failed - encryption and decryption did not restore plain text.");
         }
     }
 

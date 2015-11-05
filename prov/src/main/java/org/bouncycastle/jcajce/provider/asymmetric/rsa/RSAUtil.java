@@ -38,15 +38,15 @@ public class RSAUtil
         return false;
     }
 
-    static RSAKeyParameters generatePublicKeyParameter(
-        RSAPublicKey key)
+    public static RSAKeyParameters generatePublicKeyParameter(
+            RSAPublicKey key)
     {
         return new RSAKeyParameters(false, key.getModulus(), key.getPublicExponent());
 
     }
 
-    static RSAKeyParameters generatePrivateKeyParameter(
-        RSAPrivateKey key)
+    public static RSAKeyParameters generatePrivateKeyParameter(
+            RSAPrivateKey key)
     {
         if (key instanceof RSAPrivateCrtKey)
         {

@@ -16,6 +16,7 @@ public class SRA
         public void configure(ConfigurableProvider provider)
         {
             provider.addAlgorithm("KeyPairGenerator.SRA", PREFIX + "KeyPairGeneratorSpi");
+            provider.addAlgorithm("Cipher.SRA", PREFIX + "CipherSpi$NoPadding");
         }
 
     }
