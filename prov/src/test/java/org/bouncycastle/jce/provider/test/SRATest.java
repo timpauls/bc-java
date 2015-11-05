@@ -36,6 +36,8 @@ public class SRATest extends SimpleTest {
         standardKeyPairGenerationAndEnDecryption();
         keyPairGenerationAndEnDecryptionWithGivenPQ();
         checkPQ();
+        //TODO: implement sra.KeyFactorySpi.
+        //keyFactoryTest();
     }
 
     private void standardKeyPairGenerationAndEnDecryption() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -120,7 +122,16 @@ public class SRATest extends SimpleTest {
         }
     }
 
-
+    //TODO: test more than just the creation!
+    private void keyFactoryTest() {
+        try {
+            KeyFactory factory = KeyFactory.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
+        } catch (NoSuchAlgorithmException e) {
+            fail("failed - keyfactory for sra not found", e);
+        } catch (NoSuchProviderException e) {
+            fail("failed - bc provider not found, e");
+        }
+    }
 
     public static void main(String[] args) {
         Security.addProvider(new BouncyCastleProvider());
