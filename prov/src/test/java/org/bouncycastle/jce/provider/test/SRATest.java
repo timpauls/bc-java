@@ -39,8 +39,7 @@ public class SRATest extends SimpleTest {
         checkPQ();
         standardKeyPairGenerationAndEnDecryptionWithOAEPPadding();
         OAEPPaddingNonDeterministic();
-        //TODO: implement sra.KeyFactorySpi.
-        //keyFactoryTest();
+        keyFactoryTest();
     }
 
     private void standardKeyPairGenerationAndEnDecryption() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {

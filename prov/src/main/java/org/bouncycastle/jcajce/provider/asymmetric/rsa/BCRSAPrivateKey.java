@@ -34,7 +34,7 @@ public class BCRSAPrivateKey
     {
     }
 
-    BCRSAPrivateKey(
+    public BCRSAPrivateKey(
         RSAKeyParameters key)
     {
         this.modulus = key.getModulus();

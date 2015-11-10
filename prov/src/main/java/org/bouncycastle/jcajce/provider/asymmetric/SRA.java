@@ -43,7 +43,7 @@ public class SRA
 
 
             provider.addAlgorithm("KeyPairGenerator.SRA", PREFIX + "KeyPairGeneratorSpi");
-            //provider.addAlgorithm("KeyFactory.SRA", PREFIX + "KeyFactorySpi");
+            provider.addAlgorithm("KeyFactory.SRA", PREFIX + "KeyFactorySpi");
         }
 
     }
