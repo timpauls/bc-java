@@ -1,6 +1,7 @@
 package org.bouncycastle.crypto.params;
 
 import org.bouncycastle.crypto.KeyGenerationParameters;
+import org.bouncycastle.math.ec.WNafUtil;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -36,9 +37,27 @@ public class SRAKeyGenerationParameters extends KeyGenerationParameters {
             throw new IllegalArgumentException("q is probably NOT prime!");
         }
 
+
         BigInteger n = p.multiply(q);
         if (n.bitLength() != strength) {
             throw new IllegalArgumentException("p and q are not strong enough!");
+        }
+
+        int mindiffbits = strength / 3;
+        BigInteger diff = q.subtract(p).abs();
+        if (diff.bitLength() < mindiffbits) {
+            throw new IllegalArgumentException("p and q lie too close together!");
+        }
+
+        /*
+         * Require a minimum weight of the NAF representation, since low-weight composites may
+         * be weak against a version of the number-field-sieve for factoring.
+         *
+         * See "The number field sieve for integers of low weight", Oliver Schirokauer.
+         */
+        int minWeight = strength >> 2;
+        if (WNafUtil.getNafWeight(n) < minWeight) {
+            throw new IllegalArgumentException("NAF weight not high enough!");
         }
     }
 
