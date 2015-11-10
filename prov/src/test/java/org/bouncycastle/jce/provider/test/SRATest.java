@@ -2,6 +2,7 @@ package org.bouncycastle.jce.provider.test;
 
 import org.bouncycastle.jcajce.provider.asymmetric.sra.SRAKeyGenParameterSpec;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.test.SimpleTest;
 
@@ -36,11 +37,14 @@ public class SRATest extends SimpleTest {
         standardKeyPairGenerationAndEnDecryption();
         keyPairGenerationAndEnDecryptionWithGivenPQ();
         checkPQ();
+        standardKeyPairGenerationAndEnDecryptionWithOAEPPadding();
+        OAEPPaddingNonDeterministic();
         //TODO: implement sra.KeyFactorySpi.
         //keyFactoryTest();
     }
 
     private void standardKeyPairGenerationAndEnDecryption() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        System.out.println("standardKeyPairGenerationAndEnDecryption");
         KeyPairGenerator generator = KeyPairGenerator.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
         generator.initialize(KEY_SIZE);
 
@@ -67,7 +71,81 @@ public class SRATest extends SimpleTest {
         }
     }
 
+    private void standardKeyPairGenerationAndEnDecryptionWithOAEPPadding() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        System.out.println("standardKeyPairGenerationAndEnDecryptionWithOAEPPadding");
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
+        generator.initialize(KEY_SIZE);
+
+        KeyPair keyPair = generator.generateKeyPair();
+
+        Cipher engine = Cipher.getInstance("SRA/NONE/OAEPPADDING", BouncyCastleProvider.PROVIDER_NAME);
+
+        System.out.println("Plain: " + PLAIN_TEXT);
+
+        engine.init(Cipher.ENCRYPT_MODE, keyPair.getPublic());
+        byte[] cipher = engine.doFinal(PLAIN_TEXT.getBytes());
+
+        System.out.println("Cipher: " + Hex.toHexString(cipher));
+
+        engine.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+        byte[] decipher = engine.doFinal(cipher);
+
+        String decipherString = new String(decipher);
+
+        System.out.println("Decipher: " + decipherString);
+
+        if (!PLAIN_TEXT.equals(decipherString)) {
+            fail("failed - encryption and decryption did not restore plain text.");
+        }
+    }
+
+    private void OAEPPaddingNonDeterministic() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        System.out.println("OAEPPaddingNonDeterministic");
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
+        generator.initialize(KEY_SIZE);
+
+        KeyPair keyPair = generator.generateKeyPair();
+
+        Cipher engine = Cipher.getInstance("SRA/NONE/OAEPPADDING", BouncyCastleProvider.PROVIDER_NAME);
+
+        System.out.println("Plain: " + PLAIN_TEXT);
+
+        engine.init(Cipher.ENCRYPT_MODE, keyPair.getPublic());
+        byte[] cipher = engine.doFinal(PLAIN_TEXT.getBytes());
+
+        System.out.println("Cipher1: " + Hex.toHexString(cipher));
+
+        byte[] cipherTwo = engine.doFinal(PLAIN_TEXT.getBytes());
+
+        if (Arrays.areEqual(cipher, cipherTwo)) {
+            fail("failed - was deterministic with padding.");
+        }
+
+        System.out.println("Cipher2: " + Hex.toHexString(cipherTwo));
+
+        engine.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+        byte[] decipher = engine.doFinal(cipher);
+
+        String decipherString = new String(decipher);
+
+        System.out.println("Decipher1: " + decipherString);
+
+        byte[] decipherTwo = engine.doFinal(cipherTwo);
+        String decipherStringTwo = new String(decipherTwo);
+
+        System.out.println("Decipher2: " + decipherStringTwo);
+
+        if (!PLAIN_TEXT.equals(decipherString)) {
+            fail("failed - encryption and decryption did not restore plain text.");
+        }
+
+        if (!PLAIN_TEXT.equals(decipherStringTwo)) {
+            fail("failed - encryption and decryption of 2nd attempt did not restore plain text");
+        }
+    }
+
     private void keyPairGenerationAndEnDecryptionWithGivenPQ() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        System.out.println("keyPairGenerationAndEnDecryptionWithGivenPQ");
         SRAKeyGenParameterSpec sraKeyGenParameterSpec = new SRAKeyGenParameterSpec(KEY_SIZE, DEFAULT_P, DEFAULT_Q);
 
         KeyPairGenerator generator = KeyPairGenerator.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
@@ -100,6 +178,7 @@ public class SRATest extends SimpleTest {
     }
 
     private void checkPQ() throws NoSuchProviderException, NoSuchAlgorithmException {
+        System.out.println("checkPQ");
         SRAKeyGenParameterSpec sraKeyGenParameterSpec = new SRAKeyGenParameterSpec(KEY_SIZE, DEFAULT_P, DEFAULT_Q);
 
         KeyPairGenerator generator = KeyPairGenerator.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
@@ -124,6 +203,7 @@ public class SRATest extends SimpleTest {
 
     //TODO: test more than just the creation!
     private void keyFactoryTest() {
+        System.out.println("keyFactoryTest");
         try {
             KeyFactory factory = KeyFactory.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
         } catch (NoSuchAlgorithmException e) {
