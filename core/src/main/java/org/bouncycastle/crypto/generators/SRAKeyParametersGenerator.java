@@ -12,8 +12,6 @@ public class SRAKeyParametersGenerator
     private int             certainty;
     private SecureRandom    random;
 
-    private static final BigInteger TWO = BigInteger.valueOf(2);
-
     /**
      * Initialise the parameters generator.
      * 
