@@ -45,7 +45,6 @@ public class SRAKeyPairGenerator implements AsymmetricCipherKeyPairGenerator {
         //
         // calculate the private exponent
         //
-        //TODO: provide correct phi(n).(URGENT!)
         d = e.modInverse(lcm);
 
         //
