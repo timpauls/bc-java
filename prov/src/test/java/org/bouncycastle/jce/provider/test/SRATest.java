@@ -259,6 +259,7 @@ public class SRATest extends SimpleTest {
     }
 
     private void restorePandQFromGeneratedKeys() {
+        System.out.println("restorePandQFromGeneratedKeys");
         KeyPairGenerator generator = null;
         try {
             generator = KeyPairGenerator.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
