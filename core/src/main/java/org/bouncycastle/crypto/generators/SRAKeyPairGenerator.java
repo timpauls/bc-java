@@ -73,7 +73,10 @@ public class SRAKeyPairGenerator implements AsymmetricCipherKeyPairGenerator {
     {
         for (;;)
         {
-            BigInteger e = new BigInteger(phiN.bitLength(), param.getCertainty(), param.getRandom());
+            BigInteger e = new BigInteger(phiN.bitLength(), param.getRandom());
+            if (!e.gcd(phiN).equals(BigInteger.ONE)) {
+                continue;
+            }
 
             if (e.compareTo(ONE) <= 0) {
                 continue;
