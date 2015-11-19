@@ -28,6 +28,9 @@ public class SRAKeyPairGenerator implements AsymmetricCipherKeyPairGenerator {
         q = param.getQ();
         n = p.multiply(q);
 
+        // d lower bound is 2^(strength / 2)
+        BigInteger dLowerBound = BigInteger.valueOf(2).pow(param.getStrength() / 2);
+
         if (p.compareTo(q) < 0)
         {
             gcd = p;
@@ -40,12 +43,21 @@ public class SRAKeyPairGenerator implements AsymmetricCipherKeyPairGenerator {
         gcd = pSub1.gcd(qSub1);
         lcm = pSub1.divide(gcd).multiply(qSub1);
 
-        e = chooseRandomPublicExponent(pSub1.multiply(qSub1));
+        boolean done = false;
+        do {
+            e = chooseRandomPublicExponent(pSub1.multiply(qSub1));
 
-        //
-        // calculate the private exponent
-        //
-        d = e.modInverse(lcm);
+            //
+            // calculate the private exponent
+            //
+            d = e.modInverse(lcm);
+
+            done = d.compareTo(dLowerBound) > 0;
+
+//            if (!done) {
+//                System.out.println("ERROR: d too small. should be " + dLowerBound.toString(10) + " but is " + d.toString(10));
+//            }
+        } while (!done);
 
         //
         // calculate the CRT factors
