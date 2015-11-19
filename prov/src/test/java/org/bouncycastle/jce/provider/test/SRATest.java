@@ -3,6 +3,7 @@ package org.bouncycastle.jce.provider.test;
 import org.bouncycastle.jcajce.provider.asymmetric.sra.SRADecryptionKeySpec;
 import org.bouncycastle.jcajce.provider.asymmetric.sra.SRAEncryptionKeySpec;
 import org.bouncycastle.jcajce.provider.asymmetric.sra.SRAKeyGenParameterSpec;
+import org.bouncycastle.jcajce.provider.asymmetric.x509.*;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
@@ -14,6 +15,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.math.BigInteger;
 import java.security.*;
+import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
@@ -43,6 +45,7 @@ public class SRATest extends SimpleTest {
         standardKeyPairGenerationAndEnDecryptionWithOAEPPadding();
         OAEPPaddingNonDeterministic();
         restoreKeyPairWithKeyFactoryTest();
+        restorePandQFromGeneratedKeys();
     }
 
     private void standardKeyPairGenerationAndEnDecryption() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -225,7 +228,7 @@ public class SRATest extends SimpleTest {
             KeyFactory factory = KeyFactory.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
 
             BigInteger n = DEFAULT_P.multiply(DEFAULT_Q);
-            PrivateKey privateKey = factory.generatePrivate(new SRADecryptionKeySpec(n, d));
+            PrivateKey privateKey = factory.generatePrivate(new SRADecryptionKeySpec(DEFAULT_P, DEFAULT_Q, d, exp));
             PublicKey publicKey = factory.generatePublic(new SRAEncryptionKeySpec(n, exp));
 
             RSAPrivateKey priv = (RSAPrivateKey) privateKey;
@@ -252,6 +255,37 @@ public class SRATest extends SimpleTest {
             fail("failed - bc provider not found, e");
         } catch (InvalidKeySpecException e) {
             fail("failed - SRAKeySpec not recognized.", e);
+        }
+    }
+
+    private void restorePandQFromGeneratedKeys() {
+        KeyPairGenerator generator = null;
+        try {
+            generator = KeyPairGenerator.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
+            SRAKeyGenParameterSpec sraKeyGenParameterSpec = new SRAKeyGenParameterSpec(KEY_SIZE, DEFAULT_P, DEFAULT_Q);
+            generator.initialize(sraKeyGenParameterSpec);
+            KeyPair keyPair = generator.generateKeyPair();
+
+            KeyFactory factory = KeyFactory.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
+
+            SRADecryptionKeySpec keySpec = factory.getKeySpec(keyPair.getPrivate(), SRADecryptionKeySpec.class);
+
+            if (!keySpec.getP().equals(DEFAULT_P)) {
+                fail("failed - uncorrect p in keyspec.");
+            }
+
+            if (!keySpec.getQ().equals(DEFAULT_Q)) {
+                fail("failed - uncorrect p in keyspec.");
+            }
+
+        } catch (NoSuchAlgorithmException e) {
+            fail("fail");
+        } catch (NoSuchProviderException e) {
+            fail("fail");
+        } catch (InvalidAlgorithmParameterException e) {
+            fail("fail");
+        } catch (InvalidKeySpecException e) {
+            fail("failed - unable to recover keyspec from valid sra key.");
         }
     }
 
