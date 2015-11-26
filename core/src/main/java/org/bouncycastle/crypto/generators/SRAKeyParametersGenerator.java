@@ -40,6 +40,11 @@ public class SRAKeyParametersGenerator
         int mindiffbits = this.size / 3;
         int minWeight = this.size >> 2;
 
+
+        //TODO: consider using DHParametersHelper.generateSafePrimes() for p and q generation.
+        // (see RSAKeyPairGenerator, same to do...)
+        // atm the algorithm seems to be very slow for big numbers, since p = 2q+1
+        // fails to find a prime.
         while (true) {
             BigInteger p;
             while (true) {
