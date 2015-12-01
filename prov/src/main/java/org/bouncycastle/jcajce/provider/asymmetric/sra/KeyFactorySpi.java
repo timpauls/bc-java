@@ -66,7 +66,7 @@ public class KeyFactorySpi extends BaseKeyFactorySpi {
 
             dP = spec.getD().remainder(pSub1);
             dQ = spec.getD().remainder(qSub1);
-            qInv = spec.getD().modInverse(spec.getP());
+            qInv = spec.getQ().modInverse(spec.getP());
 
             return new BCRSAPrivateCrtKey(new RSAPrivateCrtKeyParameters(spec.getN(), spec.getE(), spec.getD(), spec.getP(), spec.getQ(), dP, dQ, qInv));
         }

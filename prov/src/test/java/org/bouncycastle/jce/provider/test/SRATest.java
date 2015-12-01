@@ -46,6 +46,7 @@ public class SRATest extends SimpleTest {
         OAEPPaddingNonDeterministic();
         restoreKeyPairWithKeyFactoryTest();
         restorePandQFromGeneratedKeys();
+        restoreKeyAndUseIt();
     }
 
     private void standardKeyPairGenerationAndEnDecryption() throws NoSuchAlgorithmException, NoSuchProviderException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -293,5 +294,59 @@ public class SRATest extends SimpleTest {
     public static void main(String[] args) {
         Security.addProvider(new BouncyCastleProvider());
         runTest(new SRATest());
+    }
+
+    // http://redmine.fh-wedel.de/issues/902
+    private void restoreKeyAndUseIt() throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeySpecException {
+        SRAKeyGenParameterSpec sraKeyGenParameterSpec = new SRAKeyGenParameterSpec(2048, DEFAULT_P, DEFAULT_Q);
+
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
+        generator.initialize(sraKeyGenParameterSpec);
+        KeyPair keyPair = generator.generateKeyPair();
+
+        KeyFactory factory = KeyFactory.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
+        SRADecryptionKeySpec keySpec = factory.getKeySpec(keyPair.getPrivate(), SRADecryptionKeySpec.class);
+
+        BigInteger d = keySpec.getD();
+        BigInteger exp = keySpec.getE();
+
+        // Create another Keypair
+        BigInteger n = DEFAULT_P.multiply(DEFAULT_Q);
+        PrivateKey privateKey = factory.generatePrivate(new SRADecryptionKeySpec(DEFAULT_P, DEFAULT_Q, d, exp));
+        PublicKey publicKey = factory.generatePublic(new SRAEncryptionKeySpec(n, exp));
+
+        KeyPair keyPair2 = new KeyPair(publicKey, privateKey);
+
+        // Try encryption and decryption
+
+        // No problems with keypair
+        Cipher engine = null;
+        try {
+            engine = Cipher.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
+            engine.init(Cipher.ENCRYPT_MODE, keyPair.getPublic());
+            byte[] ciphertext = engine.doFinal("Test".getBytes());
+            engine.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+            byte[] plaintext = engine.doFinal(ciphertext);
+
+            if (!Arrays.areEqual(plaintext, "Test".getBytes())) {
+                fail("fail - decrypton failed to restore original plain text");
+            }
+        } catch (Exception e) {
+            fail("fail - Exception using generated keypair.", e);
+        }
+
+        try {
+            Cipher engine2 = Cipher.getInstance("SRA", BouncyCastleProvider.PROVIDER_NAME);
+            engine2.init(Cipher.ENCRYPT_MODE, keyPair2.getPublic());
+            byte[] ciphertext2 = engine2.doFinal("Test".getBytes());
+            engine2.init(Cipher.DECRYPT_MODE, keyPair2.getPrivate());
+            byte[] plaintext2 = engine2.doFinal(ciphertext2);
+
+            if (!Arrays.areEqual(plaintext2, "Test".getBytes())) {
+                fail("fail - decrypton failed to restore original plain text");
+            }
+        } catch (Exception e) {
+            fail("fail - Exception using restored keypair.", e);
+        }
     }
 }
