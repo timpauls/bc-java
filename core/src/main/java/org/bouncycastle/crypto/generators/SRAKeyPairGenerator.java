@@ -6,6 +6,8 @@ import org.bouncycastle.crypto.KeyGenerationParameters;
 import org.bouncycastle.crypto.params.RSAKeyParameters;
 import org.bouncycastle.crypto.params.RSAPrivateCrtKeyParameters;
 import org.bouncycastle.crypto.params.SRAKeyGenerationParameters;
+import org.bouncycastle.crypto.params.SRAKeyParameters;
+import org.bouncycastle.pqc.crypto.ntru.IndexGenerator;
 
 import java.math.BigInteger;
 
@@ -73,6 +75,22 @@ public class SRAKeyPairGenerator implements AsymmetricCipherKeyPairGenerator {
                 new RSAPrivateCrtKeyParameters(n, e, d, p, q, dP, dQ, qInv));
 
         return result;
+    }
+
+    public static AsymmetricCipherKeyPair createKeyPair(SRAKeyParameters parameters) {
+        BigInteger n = parameters.getP().multiply(parameters.getQ());
+        //
+        // calculate the CRT factors
+        //
+        BigInteger dP, dQ, qInv;
+
+        dP = parameters.getD().remainder(parameters.getP().subtract(ONE));
+        dQ = parameters.getD().remainder(parameters.getQ().subtract(ONE));
+        qInv = parameters.getQ().modInverse(parameters.getP());
+
+        return new AsymmetricCipherKeyPair(
+                new RSAKeyParameters(false, n, parameters.getE()),
+                new RSAPrivateCrtKeyParameters(n, parameters.getE(), parameters.getD(), parameters.getP(), parameters.getQ(), dP, dQ, qInv));
     }
 
     /**

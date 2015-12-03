@@ -6,6 +6,8 @@ import org.bouncycastle.crypto.engines.SRAEngine;
 import org.bouncycastle.crypto.generators.SRAKeyPairGenerator;
 import org.bouncycastle.crypto.generators.SRAKeyParametersGenerator;
 import org.bouncycastle.crypto.params.SRAKeyGenerationParameters;
+import org.bouncycastle.crypto.params.SRAKeyParameters;
+import org.bouncycastle.crypto.util.SRAKeyParameterExtractor;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.test.SimpleTest;
@@ -20,7 +22,7 @@ public class SRATest extends SimpleTest {
 
     //
     // to check that we handling byte extension by big number correctly.
-    //
+    //keyPair2
     static String edgeInput = "ff6f77206973207468652074696d6520666f7220616c6c20676f6f64206d656e";
     private SecureRandom secureRandom;
     private SRAKeyParametersGenerator keyParamGenerator;
@@ -48,6 +50,7 @@ public class SRATest extends SimpleTest {
         testKeyParameterGeneration();
         testEncryptionDecryption();
         testCommutativity();
+        restoreKeyAndUseIt();
     }
 
     private void testSRAEngineNotInitializedException() {
@@ -150,6 +153,55 @@ public class SRATest extends SimpleTest {
 
         if (!Arrays.areEqual(decryptedAlice, cipherBob)) {
             fail ("failed - encryption is not commutative!");
+        }
+    }
+
+    private void restoreKeyAndUseIt() {
+        SRAKeyPairGenerator sraKeyPairGenerator = new SRAKeyPairGenerator();
+        SRAKeyGenerationParameters sraKeyGenerationParameters = keyParamGenerator.generateParameters();
+        sraKeyPairGenerator.init(sraKeyGenerationParameters);
+        AsymmetricCipherKeyPair asymmetricCipherKeyPair = sraKeyPairGenerator.generateKeyPair();
+
+        SRAKeyParameters sraKeyParameters = SRAKeyParameterExtractor.extractParameters(asymmetricCipherKeyPair);
+
+        // Create another Keypair
+        AsymmetricCipherKeyPair keyPair2 = SRAKeyPairGenerator.createKeyPair(sraKeyParameters);
+
+        // Try encryption and decryption
+        byte[] data = Hex.decode(edgeInput);
+
+        // Original key
+        SRAEngine engine = new SRAEngine();
+        engine.init(true, asymmetricCipherKeyPair.getPublic());
+        byte[] ciphertext = engine.processBlock(data, 0, data.length);
+
+        engine.init(false, asymmetricCipherKeyPair.getPrivate());
+        byte[] plaintext = engine.processBlock(ciphertext, 0, ciphertext.length);
+
+        if (!Arrays.areEqual(plaintext, data)) {
+            fail("fail - decrypton with original key failed to restore original plain text");
+        }
+
+        // Restored key
+        engine.init(true, keyPair2.getPublic());
+        byte[] ciphertext2 = engine.processBlock(data, 0, data.length);
+
+        engine.init(false, keyPair2.getPrivate());
+        byte[] plaintext2 = engine.processBlock(ciphertext2, 0, ciphertext2.length);
+
+        if (!Arrays.areEqual(plaintext2, data)) {
+            fail("fail - decrypton with restored key failed to restore original plain text");
+        }
+
+        // Encryption with original, decryption with restored key
+        engine.init(true, asymmetricCipherKeyPair.getPublic());
+        byte[] ciphertext3 = engine.processBlock(data, 0, data.length);
+
+        engine.init(false, keyPair2.getPrivate());
+        byte[] plaintext3 = engine.processBlock(ciphertext3, 0, ciphertext3.length);
+
+        if (!Arrays.areEqual(plaintext3, data)) {
+            fail("fail - decrypton with restored key failed to restore original plain text encrypted with original key");
         }
     }
 

@@ -15,7 +15,7 @@ public class SRAKeyParametersGenerator
     /**
      * Initialise the parameters generator.
      * 
-     * @param size bit length for the prime p
+     * @param size bit length for the modulus
      * @param certainty level of certainty for the prime number tests
      * @param random  a source of randomness
      */
