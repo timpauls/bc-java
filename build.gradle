@@ -35,6 +35,10 @@ ext {
     bcTestDataHome = file('core/src/test/data').absolutePath
 }
 
+jar {
+    from sourceSets.main.allSource
+}
+
 task printProperties << {
     println bcTestDataHome
 }
